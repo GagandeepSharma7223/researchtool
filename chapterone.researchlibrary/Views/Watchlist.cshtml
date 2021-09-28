@@ -1,0 +1,35 @@
+﻿@model WatchlistViewModel
+@{
+    ViewData["Title"] = "Watchlist - Research Library";
+}
+
+<div class="container">
+    <h2>Watchlist</h2>
+    <br />
+    <table style="width: 100%;">
+        <tr>
+            <th>Name</th>
+            <th># of Friends</th>
+            <th>Watching Since</th>
+        </tr>
+
+        @foreach (var entry in Model.Profiles)
+        {
+            <tr>
+                <td>
+                    <img class="profile-avatar rounded-circle" src="@entry.AvatarUri" width="40" height="40" />
+                    <a href="https://twitter.com/@entry.ScreenName" target="_blank">@entry.ScreenName</a>
+                </td>
+                <td>@entry.NumberOfFriends</td>
+                <td>@entry.WatchingSince</td>
+            </tr>
+        }
+
+        @if (Model.Profiles.Count() == 0)
+        {
+            <tr><td colspan="3">No profiles just yet</td></tr>
+        }
+
+    </table>
+
+</div>

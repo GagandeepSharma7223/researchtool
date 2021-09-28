@@ -1,0 +1,152 @@
+﻿@using chapterone.data.models.twitter;
+@using chapterone.data.models.enums;
+@using NodaTime;
+
+@model TimelineViewModel
+
+@{
+    ViewData["Title"] = "Timeline - Research Library";
+
+    var today = LocalDate.FromDateTime(DateTime.UtcNow);
+    var yesterday = today - Period.FromDays(1);
+}
+
+<div class="container">
+
+    <h2>Timeline</h2>
+
+    @foreach (var message in Model.Entries)
+    {
+        <div class="message">
+
+            @if (message.Created.Date == today)
+            {
+                <div class="timestamp">Today at @message.Created.ToString("HH':'mm", null)</div>
+            }
+            else if (message.Created.Date == yesterday)
+            {
+                <div class="timestamp">Yesterday at @message.Created.ToString("HH':'mm", null)</div>
+            }
+            else
+            {
+                <div class="timestamp">@message.Created.ToString("dd MMM uuuu 'at' HH':'mm", null)</div>
+            }
+
+            @switch (message.Type)
+            {
+                case MessageType.TwitterWatchlistFriendsFollowed:
+                    {
+                        var msg = message as WatchlistFriendsFollowingMessage;
+
+                        @foreach (var name in msg.FollowedScreenNames)
+                        {
+                            <div class="profile">
+                                <img src="@name.AvatarUri" class="profile-avatar rounded-circle" width="30" height="30" />
+                                <a href="https://twitter.com/@name.ScreenName" target="_blank">@name.ScreenName</a>
+                                <div class="profile-bio text-muted">@name.Biography</div>
+                            </div>
+                        }
+                        <br />
+                        <div class="text-muted">
+                            followed by:
+                            <img src="@msg.ProfileAvatarUri" class="rounded-circle" width="30" height="30" />
+                            <a href="https://twitter.com/@msg.ProfileScreenName" target="_blank">@msg.ProfileScreenName</a>
+                        </div>
+                        break;
+                    }
+                case MessageType.TwitterWatchlistFriendsUnfollowed:
+                    {
+                        var msg = message as WatchlistFriendsUnfollowingMessage;
+                        <span class="text-muted">
+                            <img src="@msg.ProfileAvatarUri" class="rounded-circle" width="30" height="30" />
+                            <a href="https://twitter.com/@msg.ProfileScreenName">@msg.ProfileScreenName</a> unfollowed:
+                        </span>
+
+                        @foreach (var name in msg.UnfollowedScreenNames)
+                        {
+                            <span>
+                                <img src="@name.AvatarUri" class="rounded-circle" width="30" height="30" />
+                                <a href="https://twitter.com/@name.ScreenName" target="_blank">@name.ScreenName</a>
+                            </span>
+                        }
+                        break;
+                    }
+
+                case MessageType.TwitterWatchlistProfileAdded:
+                    {
+                        var msg = message as WatchlistAddedMessage;
+                        <div class="text-muted">
+                            Watching:
+                            @foreach (var name in msg.AddedScreenNames)
+                            {
+                                <div class="profile">
+                                    <img src="@name.AvatarUri" class="rounded-circle" width="30" height="30" />
+                                    <a href="https://twitter.com/@name.ScreenName" target="_blank">@name.ScreenName</a>
+                                    <div class="text-muted">@name.Biography</div>
+                                </div>
+                            }
+                        </div>
+                        break;
+                    }
+
+                    @*case MessageType.TwitterWatchlistProfileRemoved:
+                        {
+                            var msg = message as WatchlistRemovedMessage;
+                            <div class="text-muted">
+                                Removed from watchlist:
+                                @foreach (var name in msg.RemovedScreenNames)
+                                {
+                                    <div class="profile">
+                                        <img src="@name.AvatarUri" class="rounded-circle" width="30" height="30" />
+                                        <a href="https://twitter.com/@name.ScreenName" target="_blank">@name.ScreenName</a>
+                                    </div>
+                                }
+                            </div>
+                            break;
+                        }*@
+            }
+        </div>
+    }
+
+    @if (Model.Entries.Count() == 0)
+    {
+        <div>No updates just yet</div>
+    }
+
+    @if (Model.MaxPages > 1)
+    {
+        var isPreviousEnabled = Model.CurrentPage > 0;
+        var isNextEnabled = Model.CurrentPage < Model.MaxPages;
+
+        var startIndex = Model.CurrentPage > 5 ? Model.CurrentPage - 5 : 0;
+        var endIndex = Model.CurrentPage < (Model.MaxPages - 5) ? Model.CurrentPage + 5 : Model.MaxPages;
+
+        <br />
+        <nav>
+            <ul class="pagination justify-content-center">
+                @if (isPreviousEnabled)
+                {
+                <li class="page-item">
+                    <a class="page-link" href="/timeline?page=@(Model.CurrentPage - 1)">&laquo;</a>
+                </li>
+                }
+
+                @for (var i = startIndex; i < endIndex; i++)
+                {
+                <li class="page-item @(Model.CurrentPage == i ? "active" : "")"><a class="page-link" href="/timeline?page=@i">@(i + 1)</a></li>
+                }
+
+                @if (isNextEnabled)
+                {
+                <li class="page-item">
+                    <a class="page-link" href="/timeline?page=@(Model.CurrentPage + 1)">&raquo;</a>
+                </li>
+                }
+        </ul>
+    </nav>
+    }
+</div>
+
+@section Scripts {
+    @*<script type="text/javascript" src="~/js/timeline.js" asp-append-version="true"></script>*@
+}

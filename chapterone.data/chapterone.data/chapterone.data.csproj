@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MongoDb.Bson.NodaTime" Version="2.0.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.6.1" />
+    <PackageReference Include="NodaTime" Version="2.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\chapterone.data.shared\chapterone.data.shared.csproj" />
+    <ProjectReference Include="..\..\chapterone.services\chapterone.services\chapterone.services.csproj" />
+  </ItemGroup>
+
+</Project>

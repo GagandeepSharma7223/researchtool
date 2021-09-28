@@ -1,0 +1,27 @@
+﻿@model SettingsViewModel
+@{
+    ViewData["Title"] = "Settings - Research Library";
+}
+
+<div class="container">
+    <h2>Settings</h2>
+    <h3>Users</h3>
+
+    @foreach (var user in Model.Users)
+    {
+        <div><span>@user</span><form method="post" action="/removeuser"><input type="hidden" name="email" value="@user" /><input type="submit" /></form></div>
+    }
+
+    @if (Model.Users.Count() == 0)
+    {
+        <div>No one else has access to this tool</div>
+    }
+
+    <form class="form" method="post" action="/adduser">
+        <input type="email" id="email" name="email" value="" placeholder="Enter an email address" />
+        <input type="text" id="password" name="password" value="" placeholder="Password" />
+        <input type="submit" value="+" />
+    </form>
+
+    <br /><br />
+</div>

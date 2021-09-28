@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="2.0.4" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\chapterone.data.models\chapterone.data.models\chapterone.data.models.csproj" />
+    <ProjectReference Include="..\chapterone.data\chapterone.data\chapterone.data.csproj" />
+    <ProjectReference Include="..\chapterone.email\chapterone.email\chapterone.email.csproj" />
+    <ProjectReference Include="..\chapterone.logic\chapterone.logic\chapterone.logic.csproj" />
+    <ProjectReference Include="..\chapterone.shared\chapterone.shared\chapterone.shared.csproj" />
+  </ItemGroup>
+
+</Project>

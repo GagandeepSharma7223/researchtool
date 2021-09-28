@@ -1,0 +1,94 @@
+﻿body {
+    /*font-family: 'Quicksand', sans-serif;*/
+    font-family: 'Roboto', sans-serif;
+    padding-top: 50px;
+    padding-bottom: 20px;
+}
+
+/* Wrapping element */
+/* Set some basic padding to keep content from hitting the edges */
+.body-content {
+    margin-top: 55px;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.navbar-brand img {
+    height: 50px;
+}
+
+/* Carousel */
+.carousel-caption p {
+    font-size: 20px;
+    line-height: 1.4;
+}
+
+/* Make .svg files in the carousel display properly in older browsers */
+.carousel-inner .item img[src$=".svg"] {
+    width: 100%;
+}
+
+/* QR code generator */
+#qrCode {
+    margin: 15px;
+}
+
+/* Timeline */
+.message {
+    background-color: rgb(255, 247, 241);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-right: auto;
+    margin-top: 1rem;
+}
+
+    .message a[href^="https://twitter.com"] {
+        padding: 0rem 0.6rem 0.3rem 0.6rem;
+        border-radius: 0.3rem;
+        color: orangered;
+        text-decoration: none;
+        text-shadow: 0 0 0.1px;
+    }
+
+        .message a[href^="https://twitter.com"]:before {
+            content: '@';
+        }
+
+    .message .timestamp {
+        font-weight: bold;
+        padding: 0.5rem 0.2rem;
+    }
+
+    .message .timestamp {
+        font-weight: bold;
+    }
+
+    .message .profile {
+        display: flex;
+        padding: 0.5rem 0;
+    }
+
+    .message .profile-avatar {
+        border: 0.2rem solid white;
+        min-width: 2rem;
+        min-height: 2rem;
+        width: 2rem;
+        height: 2rem;
+    }
+
+    .message .profile-bio {
+        padding: 0 0.5rem;
+    }
+    
+/* Hide/rearrange for smaller screens */
+@media screen and (max-width: 767px) {
+
+    /* Hide captions */
+    .carousel-caption {
+        display: none;
+    }
+
+    .message .profile {
+        display: block;
+    }
+}
