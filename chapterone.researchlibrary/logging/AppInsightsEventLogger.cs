@@ -1,6 +1,5 @@
-﻿using chapterone.shared;
-using chapterone.services.interfaces;
-
+﻿using chapterone.services.interfaces;
+using chapterone.shared;
 using Microsoft.ApplicationInsights;
 using System;
 using System.Collections.Generic;

@@ -15,13 +15,10 @@ using chapterone.web.identity;
 using chapterone.web.logging;
 using chapterone.web.managers;
 using chapterone.web.middlewares;
-
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-
 using System;
 using System.Threading.Tasks;
 
@@ -29,18 +26,12 @@ namespace chapterone.web
 {
     public class Startup
     {
-        public Startup(IHostingEnvironment env)
-        {
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
-                .AddEnvironmentVariables();
-
-            Configuration = builder.Build();
-        }
-
         public IConfiguration Configuration { get; }
+
+        public Startup(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -86,17 +77,24 @@ namespace chapterone.web
             });
 
             services.AddAuthentication();
-
-            services.AddMvc(options =>
+            var builder = services.AddControllersWithViews(config =>
             {
-                options.Filters.Add(new SetupRequiredFilter()
+                config.Filters.Add(new SetupRequiredFilter()
                 {
                     SetupPath = "/setup"
                 });
-                options.Filters.Add(new AccessAuthFilter()
+                config.Filters.Add(new AccessAuthFilter()
                 {
                     LoginPath = "/login"
                 });
+            });
+            services.AddRazorPages();
+            services.AddDistributedMemoryCache();
+            services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromSeconds(10);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
             });
         }
 
@@ -116,11 +114,18 @@ namespace chapterone.web
             }
 
             app.UseStaticFiles();
+            app.UseCookiePolicy();
+            app.UseRouting();
             app.UseAuthentication();
-
-            app.UseMvc();
+            app.UseAuthorization();
+            app.UseSession();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllerRoute("areaRoute", "{area:exists}/{controller=Admin}/{action=Index}/{id?}");
+                endpoints.MapControllerRoute("areaRoute", "{area:exists}/{controller=Tenants}/{action=Index}/{id?}");
+                endpoints.MapControllerRoute("areaRoute", "{area:exists}/{controller=Landlords}/{action=Index}/{id?}");
+            });
         }
-
 
         /// <summary>
         /// Initialise all the core services
@@ -165,7 +170,7 @@ namespace chapterone.web
             services.AddSingleton<IScheduledTask>(watchlistMonitor);
             services.AddSingleton<IScheduledTask>(friendlistMonitor);
 
-            services.AddSingleton<IHostedService, SchedulerHostedService>(serviceProvider =>
+            services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, SchedulerHostedService>(serviceProvider =>
             {
                 var instance = new SchedulerHostedService(serviceProvider.GetServices<IScheduledTask>(), logger);
                 instance.UnobservedTaskException += (sender, args) =>
@@ -177,7 +182,6 @@ namespace chapterone.web
                 return instance;
             });
         }
-
 
         private async Task MigrateProfilesAsync(data.interfaces.IDatabaseRepository<TwitterWatchlistProfile> watchlistRepo, ITwitterClient client)
         {
@@ -199,7 +203,6 @@ namespace chapterone.web
                 await watchlistRepo.UpdateAsync(profile);
             }
         }
-
 
         private async Task MigrateTimelineAsync(data.interfaces.IDatabaseRepository<Message> timelineRepo, ITwitterClient client)
         {
@@ -229,7 +232,6 @@ namespace chapterone.web
                 await timelineRepo.UpdateAsync(message);
             }
         }
-
 
         private async Task MigrateFriendsFollowedMessage(WatchlistFriendsFollowingMessage message, ITwitterClient client)
         {
