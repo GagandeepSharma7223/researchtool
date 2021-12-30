@@ -19,22 +19,19 @@ namespace chapterone.web.controllers
         private const int LOGIN_EXPIRATION_DAYS = 1;
 
         private readonly IAccountManager _accountManager;
-        private readonly IEmailService _emailService;
+        //private readonly IEmailService _emailService;
         private readonly IAppSettings _settings;
         private readonly IEventLogger _logger;
 
         /// <summary>
         /// Constructor
         /// </summary>
-        public AuthController(IAccountManager accountManager, IEmailService emailService, IAppSettings settings, IEventLogger logger)
+        public AuthController(IAccountManager accountManager, IAppSettings settings, IEventLogger logger)
         {
             _accountManager = accountManager;
-            _emailService = emailService;
+            //_emailService = emailService;
             _settings = settings;
             _logger = logger;
-
-
-
         }
 
         #region Login / Logout
@@ -112,8 +109,9 @@ namespace chapterone.web.controllers
                $"<a style=\"background-color: #00babe; border-radius: 5px; text-align: center; padding: 0.5em 2em; text-decoration: none; color: white;\" href=\"{confirmationLink}\">Reset password</a><br/><br/>" +
                 "";
 
-            if (!await _emailService.SendEmail(email, "🔐 Reset your password", emailHtml))
-                return BadRequest();
+            // TBD sendgrid is not setup to send email
+            //if (!await _emailService.SendEmail(email, "🔐 Reset your password", emailHtml))
+            //    return BadRequest();
 
             return Ok("Check your email");
         }

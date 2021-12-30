@@ -12,16 +12,18 @@ namespace chapterone.services.clients
     /// <summary>
     /// Client that communicates with Twitter
     /// </summary>
-    public class TwitterClient : ITwitterClient
+    public class TwitterClient : interfaces.ITwitterClient
     {
-        private readonly ITwitterCredentials _credentials;
-
+        private readonly TwitterCredentials _credentials;
+        private readonly Tweetinvi.TwitterClient _userClient;
         /// <summary>
         /// Constructor
         /// </summary>
         public TwitterClient(string consumerKey, string consumerSecret, string accessToken, string accessTokenSecret)
         {
-            _credentials = Auth.SetUserCredentials(consumerKey, consumerSecret, accessToken, accessTokenSecret);
+            _credentials = new TwitterCredentials(consumerKey, consumerSecret, accessToken, accessTokenSecret);
+            _userClient = new Tweetinvi.TwitterClient(_credentials);
+            //_credentials = Auth.SetUserCredentials(consumerKey, consumerSecret, accessToken, accessTokenSecret);
         }
 
 
@@ -30,7 +32,7 @@ namespace chapterone.services.clients
             await WaitIfGetFriendIdsIsAtLimit();
 
             // WARNING: Limited to 5000 friends ids
-            var ids = await UserAsync.GetFriendIds(screenName);
+            var ids = await _userClient.Users.GetFriendIdsAsync(screenName);
 
             return new TwitterFriendList()
             {
@@ -44,7 +46,7 @@ namespace chapterone.services.clients
             await WaitIfGetFriendIdsIsAtLimit();
 
             // WARNING: Limited to 5000 friends ids
-            var ids = await UserAsync.GetFriendIds(userId);
+            var ids = await _userClient.Users.GetFriendIdsAsync(userId);
 
             return new TwitterFriendList()
             {
@@ -57,7 +59,7 @@ namespace chapterone.services.clients
         {
             await WaitIfGetUserFromScreenNameIsAtLimit();
 
-            var user = await UserAsync.GetUserFromScreenName(screenName);
+            var user = await _userClient.Users.GetUserAsync(screenName);
 
             return user?.ToTwitterUser();
         }
@@ -72,13 +74,13 @@ namespace chapterone.services.clients
         {
             await WaitIfGetUsersByIdsIsAtLimit();
 
-            var users = await Sync.ExecuteTaskAsync(() => User.GetUsersFromIds(userIds));
+            var users = await _userClient.Users.GetUsersAsync(userIds);
 
             return users.Select(user => user.ToTwitterUser());
         }
 
         #region Private methods
-        
+
         /// <summary>
         /// Wait until the rate limit for the /friends/ids Twitter API
         /// </summary>
@@ -132,7 +134,8 @@ namespace chapterone.services.clients
         /// </summary>
         private Task<ICredentialsRateLimits> GetRateLimitAsync()
         {
-            return RateLimitAsync.GetCredentialsRateLimits(_credentials);
+            return _userClient.RateLimits.GetRateLimitsAsync();
+            //return RateLimitAsync.GetCredentialsRateLimits(_credentials);
         }
 
         #endregion

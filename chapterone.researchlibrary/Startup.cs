@@ -144,7 +144,7 @@ namespace chapterone.web
 
             MongoDbSetup.Setup();
 
-            var emailService = new SendGridEmailService(settings.SendGridApiKey);
+            //var emailService = new SendGridEmailService(settings.SendGridApiKey);
             var twitterClient = new TwitterClient(twitterSettings.ConsumerKey, twitterSettings.ConsumerSecret, twitterSettings.AccessToken, twitterSettings.AccessTokenSecret);
 
             var twitterWatchlistRepo = await MongoDbRepository<TwitterWatchlistProfile>.CreateRepository(config, 6, logger, collectionName: "TwitterWatchlist");
@@ -160,7 +160,7 @@ namespace chapterone.web
 
             var timelineService = new TimelineService(timelineRepo);
 
-            services.AddSingleton<IEmailService>(emailService);
+            //services.AddSingleton<IEmailService>(emailService);
             services.AddSingleton<ITimelineService>(timelineService);
             services.AddSingleton<ITwitterClient>(twitterClient);
 

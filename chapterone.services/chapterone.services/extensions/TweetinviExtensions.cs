@@ -18,7 +18,7 @@ namespace chapterone.services.extensions
                 ScreenName = thisUser.ScreenName,
                 Name = thisUser.Name,
                 Description = thisUser.Description,
-                IsFollowing = thisUser.Following
+                IsFollowing = thisUser.Following.GetValueOrDefault()
             };
         }
     }
