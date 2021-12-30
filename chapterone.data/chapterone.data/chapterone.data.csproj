@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MongoDb.Bson.NodaTime" Version="2.0.0" />
+    <PackageReference Include="MongoDb.Bson.NodaTime" Version="3.0.0" />
     <PackageReference Include="MongoDB.Driver" Version="2.14.1" />
-    <PackageReference Include="NodaTime" Version="2.3.0" />
+    <PackageReference Include="NodaTime" Version="3.0.9" />
   </ItemGroup>
 
   <ItemGroup>
