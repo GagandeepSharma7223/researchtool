@@ -1,6 +1,7 @@
 ﻿using chapterone.services.interfaces;
 using chapterone.shared;
 using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -9,10 +10,7 @@ namespace chapterone.web.logging
 {
     public class AppInsightsEventLogger : IEventLogger
     {
-        private const int TIMER_DELAY = 0;
-
-        private readonly TelemetryClient _client = new TelemetryClient();
-        private readonly Timer _heartbeat;
+        private readonly TelemetryClient _client = new TelemetryClient(TelemetryConfiguration.CreateDefault());
 
         /// <summary>
         /// Constructor
@@ -20,7 +18,6 @@ namespace chapterone.web.logging
         public AppInsightsEventLogger(string instrumentationKey)
         {
             _client.InstrumentationKey = instrumentationKey;
-            _heartbeat = new Timer(HeartbeatCallback, this, TIMER_DELAY, EventConstants.HEARTBEAT_INTERVAL_MS);
         }
 
 
