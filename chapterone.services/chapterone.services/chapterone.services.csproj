@@ -9,4 +9,9 @@
     <PackageReference Include="TweetinviAPI" Version="5.0.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\chapterone.data\chapterone.data\chapterone.data.csproj" />
+    <ProjectReference Include="..\..\chapterone.shared\chapterone.shared\chapterone.shared.csproj" />
+  </ItemGroup>
+
 </Project>

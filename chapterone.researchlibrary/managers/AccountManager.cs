@@ -1,4 +1,4 @@
-﻿using chapterone.web.identity;
+﻿using chapterone.data.models;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Linq;

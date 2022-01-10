@@ -5,7 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\chapterone.data.models\chapterone.data.models\chapterone.data.models.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="6.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\chapterone.data\chapterone.data\chapterone.data.csproj" />
     <ProjectReference Include="..\..\chapterone.services\chapterone.services\chapterone.services.csproj" />
     <ProjectReference Include="..\..\chapterone.shared\chapterone.shared\chapterone.shared.csproj" />

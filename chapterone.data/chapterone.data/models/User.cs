@@ -1,9 +1,9 @@
-﻿using chapterone.data.shared;
+﻿using chapterone.data.interfaces;
 using Microsoft.AspNetCore.Identity;
 using NodaTime;
 using System;
 
-namespace chapterone.web.identity
+namespace chapterone.data.models
 {
     public class User : IdentityUser, IEntity
     {

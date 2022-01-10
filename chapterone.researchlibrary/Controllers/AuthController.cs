@@ -1,5 +1,4 @@
-﻿using chapterone.email;
-using chapterone.services.interfaces;
+﻿using chapterone.services.interfaces;
 using chapterone.web.managers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

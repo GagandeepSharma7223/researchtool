@@ -1,4 +1,4 @@
-﻿namespace chapterone.data.models.enums
+﻿namespace chapterone.data.enums
 {
     /// <summary>
     /// Types of messages on the timeline

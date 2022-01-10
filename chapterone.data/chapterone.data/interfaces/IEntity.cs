@@ -1,7 +1,6 @@
 ﻿using NodaTime;
-using System;
 
-namespace chapterone.data.shared
+namespace chapterone.data.interfaces
 {
     public interface IEntity
     {

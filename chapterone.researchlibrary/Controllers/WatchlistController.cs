@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using chapterone.data.interfaces;
+using chapterone.web.viewmodels;
+using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using System.Threading.Tasks;
-using chapterone.data.interfaces;
-using chapterone.data.models;
-using chapterone.logic.interfaces;
-using chapterone.web.viewmodels;
-using chapterone.shared.utils;
-using Microsoft.AspNetCore.Mvc;
 
 namespace chapterone.web.controllers
 {
@@ -16,14 +11,14 @@ namespace chapterone.web.controllers
     /// </summary>
     public class WatchlistController : Controller
     {
-        private IDatabaseRepository<TwitterWatchlistProfile> _twitterWatchlist;
+        private ITwitterWatchlistRepository _twitterWatchlist;
 
         /// <summary>
         /// Constructor
         /// </summary>
-        public WatchlistController(IDatabaseRepository<TwitterWatchlistProfile> userRepo)
+        public WatchlistController(ITwitterWatchlistRepository twitterWatchlistRepository)
         {
-            _twitterWatchlist = userRepo;
+            _twitterWatchlist = twitterWatchlistRepository;
         }
 
 
@@ -33,7 +28,7 @@ namespace chapterone.web.controllers
         [HttpGet("watchlist")]
         public async Task<IActionResult> GetWatchlist()
         {
-            var profiles = await _twitterWatchlist.QueryAsync(x => true);
+            var profiles = await _twitterWatchlist.QueryAsync(x => true, pageNumber: 1, pageSize: 20);
 
             var vm = new WatchlistViewModel()
             {

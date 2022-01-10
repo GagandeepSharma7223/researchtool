@@ -9,7 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\chapterone.data.shared\chapterone.data.shared.csproj" />
+    <Folder Include="twitter\" />
   </ItemGroup>
 
 </Project>

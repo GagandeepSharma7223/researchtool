@@ -1,10 +1,9 @@
-﻿using chapterone.services.extensions;
+﻿using chapterone.data.interfaces;
+using chapterone.services.extensions;
 using chapterone.services.interfaces;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Tweetinvi;
 using Tweetinvi.Models;
 
 namespace chapterone.services.clients
@@ -12,18 +11,16 @@ namespace chapterone.services.clients
     /// <summary>
     /// Client that communicates with Twitter
     /// </summary>
-    public class TwitterClient : interfaces.ITwitterClient
+    public class TwitterClient : ITwitterClient
     {
-        private readonly TwitterCredentials _credentials;
         private readonly Tweetinvi.TwitterClient _userClient;
         /// <summary>
         /// Constructor
         /// </summary>
-        public TwitterClient(string consumerKey, string consumerSecret, string accessToken, string accessTokenSecret)
+        public TwitterClient(ITwitterSettings settings)
         {
-            _credentials = new TwitterCredentials(consumerKey, consumerSecret, accessToken, accessTokenSecret);
-            _userClient = new Tweetinvi.TwitterClient(_credentials);
-            //_credentials = Auth.SetUserCredentials(consumerKey, consumerSecret, accessToken, accessTokenSecret);
+            var credentials = new TwitterCredentials(settings.ConsumerKey, settings.ConsumerSecret, settings.AccessToken, settings.AccessTokenSecret);
+            _userClient = new Tweetinvi.TwitterClient(credentials);
         }
 
 
@@ -135,7 +132,6 @@ namespace chapterone.services.clients
         private Task<ICredentialsRateLimits> GetRateLimitAsync()
         {
             return _userClient.RateLimits.GetRateLimitsAsync();
-            //return RateLimitAsync.GetCredentialsRateLimits(_credentials);
         }
 
         #endregion

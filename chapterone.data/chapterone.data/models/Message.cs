@@ -1,4 +1,5 @@
-﻿using chapterone.data.models.enums;
+﻿using chapterone.data.enums;
+using chapterone.data.repositories;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace chapterone.data.models
@@ -6,10 +7,10 @@ namespace chapterone.data.models
     /// <summary>
     /// Model for messages on the timeline
     /// </summary>
-    [BsonKnownTypes(typeof(twitter.WatchlistFriendsFollowingMessage), 
-        typeof(twitter.WatchlistFriendsUnfollowingMessage), 
-        typeof(twitter.WatchlistAddedMessage),
-        typeof(twitter.WatchlistRemovedMessage))]
+    [BsonKnownTypes(typeof(WatchlistFriendsFollowingMessage), 
+        typeof(WatchlistFriendsUnfollowingMessage), 
+        typeof(WatchlistAddedMessage),
+        typeof(WatchlistRemovedMessage))]
     public class Message : BaseEntity
     {
         /// <summary>

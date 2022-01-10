@@ -24,10 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\chapterone.data.models\chapterone.data.models\chapterone.data.models.csproj" />
     <ProjectReference Include="..\chapterone.data\chapterone.data\chapterone.data.csproj" />
-    <ProjectReference Include="..\chapterone.email\chapterone.email\chapterone.email.csproj" />
-    <ProjectReference Include="..\chapterone.logic\chapterone.logic\chapterone.logic.csproj" />
+    <ProjectReference Include="..\chapterone.services\chapterone.services\chapterone.services.csproj" />
     <ProjectReference Include="..\chapterone.shared\chapterone.shared\chapterone.shared.csproj" />
   </ItemGroup>
 

@@ -1,12 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace chapterone.data.interfaces
+﻿namespace chapterone.data.interfaces
 {
-    public interface IDatabaseConfig
+    public interface IDatabaseSettings
     {
-        string Endpoint { get; set; }
-        string Database { get; set; }
+        string ConnectionString { get; set; }
+        string Name { get; set; }
+    }
+    public interface ITwitterSettings
+    {
+        string ConsumerKey { get; set; }
+        string ConsumerSecret { get; set; }
+        string AccessToken { get; set; }
+        string AccessTokenSecret { get; set; }
     }
 }

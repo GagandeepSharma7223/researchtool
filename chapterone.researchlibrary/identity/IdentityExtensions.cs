@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using chapterone.data.models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace chapterone.web.identity
@@ -26,7 +27,7 @@ namespace chapterone.web.identity
                     options.Password.RequireNonAlphanumeric = false;
                     options.Password.RequiredLength = 8;
                 })
-                .AddUserStore<UserStore<User>>()
+                .AddUserStore<UserStore>()
                 .AddRoleStore<NoOpRoleStore>()
                 .AddDefaultTokenProviders();
         }

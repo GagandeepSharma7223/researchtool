@@ -1,8 +1,8 @@
-﻿using chapterone.data.shared;
+﻿using chapterone.data.interfaces;
 using NodaTime;
 using System;
 
-namespace chapterone.data.models
+namespace chapterone.data.repositories
 {
     public class BaseEntity : IEntity
     {

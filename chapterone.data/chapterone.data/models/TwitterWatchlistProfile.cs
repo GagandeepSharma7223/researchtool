@@ -1,4 +1,6 @@
-﻿namespace chapterone.data.models
+﻿using chapterone.data.repositories;
+
+namespace chapterone.data.models
 {
     /// <summary>
     /// Model for a twitter account on the watchlist

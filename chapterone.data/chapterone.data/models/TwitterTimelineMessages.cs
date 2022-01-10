@@ -1,7 +1,7 @@
-﻿using chapterone.data.models.enums;
+﻿using chapterone.data.enums;
 using System.Collections.Generic;
 
-namespace chapterone.data.models.twitter
+namespace chapterone.data.models
 {
     /// <summary>
     /// POCO for Timeline messages that contain twitter screen name information
