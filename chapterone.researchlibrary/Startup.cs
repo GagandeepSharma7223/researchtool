@@ -1,6 +1,4 @@
-﻿using chapterone.data.enums;
-using chapterone.data.interfaces;
-using chapterone.data.models;
+﻿using chapterone.data.interfaces;
 using chapterone.data.mongodb;
 using chapterone.data.repositories;
 using chapterone.services.clients;
@@ -21,7 +19,6 @@ using Microsoft.Extensions.Options;
 using MongoDb.Bson.NodaTime;
 using MongoDB.Bson.Serialization;
 using System;
-using System.Threading.Tasks;
 
 namespace chapterone.web
 {
