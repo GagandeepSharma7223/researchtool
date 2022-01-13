@@ -2,65 +2,70 @@
 using chapterone.data.models;
 using chapterone.services.extensions;
 using chapterone.services.interfaces;
-using chapterone.services.scheduling;
 using chapterone.shared;
 using chapterone.shared.utils;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace chapterone.services
+namespace chapterone.web.BackgroundServices
 {
-    /// <summary>
-    /// Service for managing the watchlist using the Research Library twitter account
-    /// </summary>
-    public class TwitterWatchlistMonitor : IScheduledTask
+    public class TwitterWatchlistService : BackgroundService
     {
-        private const string RESEARCH_LIBRARY_SCREENNAME = "ResearchLbry";
-
-        private readonly IDatabaseRepository<TwitterWatchlistProfile> _twitterWatchlistRepo;
-        private readonly ITimelineService _timelineService;
-        private readonly ITwitterClient _twitter;
+        #region Initialize
+        private readonly IServiceProvider _serviceProvider;
+        private readonly IServiceScope _serviceScope;
+        private readonly ITwitterWatchlistRepository _twitterWatchlistRepo;
+        private readonly ITwitterClient _twitterClient;
+        private readonly ITimeLineRepository _timeLineRepository;
         private readonly IEventLogger _logger;
-
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        public TwitterWatchlistMonitor(IDatabaseRepository<TwitterWatchlistProfile> twitterWatchlistRepo,
-            ITimelineService timelineService,
-            ITwitterClient twitterClient,
-            IEventLogger logger)
+        private const string RESEARCH_LIBRARY_SCREENNAME = "ResearchLbry";
+        public TwitterWatchlistService(IServiceProvider serviceProvider)
         {
-            _twitterWatchlistRepo = twitterWatchlistRepo;
-            _timelineService = timelineService;
-            _twitter = twitterClient;
-            _logger = logger;
+            _serviceProvider = serviceProvider;
+            _serviceScope = _serviceProvider.CreateScope();
+            _twitterWatchlistRepo = _serviceScope.ServiceProvider.GetService<ITwitterWatchlistRepository>();
+            _twitterClient = _serviceScope.ServiceProvider.GetService<ITwitterClient>();
+            _timeLineRepository = _serviceScope.ServiceProvider.GetService<ITimeLineRepository>();
+            _logger = _serviceScope.ServiceProvider.GetService<IEventLogger>();
+        }
+        #endregion
+
+        protected async override Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                int hours = 23, mins = 55;
+                TimeSpan serviceToRunAt = new TimeSpan(hours, mins, 0); //11:55PM
+                TimeSpan timeNow = DateTime.Now.TimeOfDay;
+                if (timeNow > serviceToRunAt)
+                {
+                    await RunProcessAsync();
+                    //Run this task once every day
+                    var now = DateTime.Now;
+                    var tomorrow = DateTime.Today.AddDays(1).AddHours(hours).AddMinutes(mins);
+                    var timeSpan = tomorrow - now;
+                    await Task.Delay(timeSpan, stoppingToken);
+                }
+                else
+                {
+                    await Task.Delay(serviceToRunAt - DateTime.Now.TimeOfDay);
+                }
+            }
         }
 
-        #region Implementing IScheduledTask
-
-        /// <summary>
-        /// This tasks run schedule
-        /// </summary>
-        public string Schedule => "0 0 * * *";
-
-
-        /// <summary>
-        /// Process the Research Library's friend list
-        /// </summary>
-        public async Task ExecuteAsync(CancellationToken cancellationToken)
+        private async Task RunProcessAsync()
         {
-            // TODO: Implement the cancellation token
-
             try
             {
                 var start = DateTime.UtcNow;
 
                 // Pull the latest friend list...
-                var friendList = await _twitter.GetFriendIdsAsync(RESEARCH_LIBRARY_SCREENNAME);
+                var friendList = await _twitterClient.GetFriendIdsAsync(RESEARCH_LIBRARY_SCREENNAME);
 
                 if (friendList.FriendIds.Count() > 0)
                 {
@@ -73,7 +78,7 @@ namespace chapterone.services
                     if (differences.Added.Count() > 0)
                     {
                         // ... resolve the added users from twitter ...
-                        var userList = await _twitter.GetUsersByIdsAsync(differences.Added);
+                        var userList = await _twitterClient.GetUsersByIdsAsync(differences.Added);
 
                         // ... process them
                         await ProcessAddedFriends(userList);
@@ -94,7 +99,7 @@ namespace chapterone.services
             {
                 _logger.LogException(ex, new Dictionary<string, string>()
                 {
-                    { "monitor", nameof(TwitterWatchlistMonitor) }
+                    { "monitor", nameof(TwitterWatchlistService) }
                 });
             }
         }
@@ -108,7 +113,7 @@ namespace chapterone.services
             // Add new friends to the watchlist
             foreach (var friend in friends)
             {
-                var friendIds = (await _twitter.GetFriendIdsAsync(friend.ScreenName)).FriendIds;
+                var friendIds = (await _twitterClient.GetFriendIdsAsync(friend.ScreenName)).FriendIds;
 
                 // TODO: Implement InsertManyAsync...
                 await _twitterWatchlistRepo.InsertAsync(new TwitterWatchlistProfile()
@@ -124,12 +129,11 @@ namespace chapterone.services
             }
 
             // Report to the timeline...
-            await _timelineService.AddMessageAsync(new WatchlistAddedMessage()
+            await _timeLineRepository.InsertAsync(new WatchlistAddedMessage()
             {
                 AddedScreenNames = friends.Select(x => x.ToTwitterScreenName())
             });
         }
 
-        #endregion
     }
 }

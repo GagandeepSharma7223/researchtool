@@ -3,10 +3,8 @@ using chapterone.data.mongodb;
 using chapterone.data.repositories;
 using chapterone.services.clients;
 using chapterone.services.interfaces;
-using chapterone.services.scheduling;
 using chapterone.shared;
 using chapterone.web.BackgroundServices;
-using chapterone.web.filters;
 using chapterone.web.identity;
 using chapterone.web.logging;
 using chapterone.web.managers;
@@ -39,6 +37,8 @@ namespace chapterone.web
             services.AddScoped<ITwitterWatchlistRepository, TwitterWatchlistRepository>();
             services.AddScoped<ITimeLineRepository, TimeLineRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IRoleRepository, RoleRepository>();
+            services.AddScoped<IUserRoleRepository, UserRoleRepository>();
             services.AddScoped<ITwitterClient, TwitterClient>();
 
             InitialiseServices(services, settings);
@@ -77,17 +77,6 @@ namespace chapterone.web
             });
 
             services.AddAuthentication();
-            var builder = services.AddControllersWithViews(config =>
-            {
-                config.Filters.Add(new SetupRequiredFilter()
-                {
-                    SetupPath = "/setup"
-                });
-                config.Filters.Add(new AccessAuthFilter()
-                {
-                    LoginPath = "/login"
-                });
-            });
             services.AddRazorPages();
             services.AddDistributedMemoryCache();
             services.AddSession(options =>
@@ -152,18 +141,8 @@ namespace chapterone.web
             // Background services
             services.AddHostedService<MigrateProfileService>();
             services.AddHostedService<MigrateTimelineService>();
-            services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, SchedulerHostedService>(serviceProvider =>
-            {
-                var instance = new SchedulerHostedService(serviceProvider.GetServices<IScheduledTask>(), logger);
-                instance.UnobservedTaskException += (sender, args) =>
-                {
-                    Console.Write(args.Exception.Message);
-                    logger.LogException(args.Exception);
-                    args.SetObserved();
-                };
-                return instance;
-            });
-
+            services.AddHostedService<TwitterMessageService>();
+            services.AddHostedService<TwitterWatchlistService>();
             services.AddUserIdentity();
         }
 

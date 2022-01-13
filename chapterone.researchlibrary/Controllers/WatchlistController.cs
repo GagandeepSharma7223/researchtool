@@ -1,5 +1,6 @@
 ﻿using chapterone.data.interfaces;
 using chapterone.web.viewmodels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,6 +10,8 @@ namespace chapterone.web.controllers
     /// <summary>
     /// Watchlist API
     /// </summary>
+    /// 
+    [Authorize]
     public class WatchlistController : Controller
     {
         private ITwitterWatchlistRepository _twitterWatchlist;

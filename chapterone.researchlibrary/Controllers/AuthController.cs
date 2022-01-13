@@ -1,6 +1,8 @@
-﻿using chapterone.services.interfaces;
+﻿using chapterone.data.models;
+using chapterone.services.interfaces;
 using chapterone.web.managers;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -21,13 +23,14 @@ namespace chapterone.web.controllers
         //private readonly IEmailService _emailService;
         private readonly IAppSettings _settings;
         private readonly IEventLogger _logger;
-
+        private readonly UserManager<User> _userManager;
         /// <summary>
         /// Constructor
         /// </summary>
-        public AuthController(IAccountManager accountManager, IAppSettings settings, IEventLogger logger)
+        public AuthController(IAccountManager accountManager, IAppSettings settings, IEventLogger logger, UserManager<User> userManager)
         {
             _accountManager = accountManager;
+            _userManager = userManager;
             //_emailService = emailService;
             _settings = settings;
             _logger = logger;
@@ -59,7 +62,8 @@ namespace chapterone.web.controllers
 
                 return Redirect("/login");
             }
-
+            //var user = await _userManager.FindByEmailAsync(username);
+            //var roles = await _userManager.GetRolesAsync(user);
             var url = string.IsNullOrWhiteSpace(redirect) ? HOMEPAGE : Uri.UnescapeDataString(redirect);
             return LocalRedirect(url);
         }

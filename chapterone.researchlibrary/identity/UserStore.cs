@@ -20,10 +20,12 @@ namespace chapterone.web.identity
                                 IUserTwoFactorStore<User>,
                                 IUserLoginStore<User>,
                                 IQueryableUserStore<User>
-        //where T : User
+    //where T : User
     {
         private readonly IdentityErrorDescriber _describer = new IdentityErrorDescriber();
         private readonly IUserRepository _userRepo;
+        private readonly IRoleRepository _roleRepo;
+        private readonly IUserRoleRepository _userRoleRepo;
 
         public IQueryable<User> Users => _userRepo.AsQueryable();
 
@@ -31,9 +33,11 @@ namespace chapterone.web.identity
         /// <summary>
         /// Constructor
         /// </summary>
-        public UserStore(IUserRepository userRepo)
+        public UserStore(IUserRepository userRepo, IRoleRepository roleRepository, IUserRoleRepository userRoleRepository)
         {
             _userRepo = userRepo;
+            _roleRepo = roleRepository;
+            _userRoleRepo = userRoleRepository;
         }
 
         #region IUserStore
@@ -267,6 +271,13 @@ namespace chapterone.web.identity
         {
             var results = await _userRepo.QueryAsync(x => x.NormalizedEmail == normalizedEmail, 1);
             return results.FirstOrDefault();
+        }
+
+        public async Task<IEnumerable<IdentityRole>> GetRolesAsync(User user, CancellationToken cancellationToken)
+        {
+            var userRoles = await _userRoleRepo.QueryAsync(x => x.UserId == user.Id, 1);
+            var roles = await _roleRepo.QueryAsync(x => x.Id == userRoles.First().Id, 1);   
+            return roles;
         }
 
 

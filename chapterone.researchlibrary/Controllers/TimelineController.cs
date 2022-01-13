@@ -1,6 +1,7 @@
 ﻿using chapterone.data.interfaces;
 using chapterone.services.interfaces;
 using chapterone.web.viewmodels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -12,6 +13,8 @@ namespace chapterone.web.controllers
     /// <summary>
     /// Timeline API
     /// </summary>
+    /// 
+    [Authorize]
     public class TimelineController : Controller
     {
         private const int TIMELINE_QUERY_PAGESIZE = 20;

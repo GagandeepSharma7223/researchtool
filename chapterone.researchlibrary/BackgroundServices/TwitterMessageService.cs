@@ -2,58 +2,49 @@
 using chapterone.data.models;
 using chapterone.services.extensions;
 using chapterone.services.interfaces;
-using chapterone.services.scheduling;
 using chapterone.shared;
 using chapterone.shared.utils;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace chapterone.services
+namespace chapterone.web.BackgroundServices
 {
-    /// <summary>
-    /// Service for processing the friend lists of everyone in the watchlist
-    /// </summary>
-    public class TwitterWatchlistFriendsMonitor : IScheduledTask
+    public class TwitterMessageService : BackgroundService
     {
-        private readonly IDatabaseRepository<TwitterWatchlistProfile> _twitterWatchlistRepo;
-        private readonly ITimelineService _timelineService;
-        private readonly ITwitterClient _twitter;
+        #region Initialize
+        private readonly IServiceProvider _serviceProvider;
+        private readonly IServiceScope _serviceScope;
+        private readonly ITwitterWatchlistRepository _twitterWatchlistRepo;
+        private readonly ITwitterClient _twitterClient;
+        private readonly ITimeLineRepository _timeLineRepository;
         private readonly IEventLogger _logger;
-
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        public TwitterWatchlistFriendsMonitor(IDatabaseRepository<TwitterWatchlistProfile> twitterWatchlistRepo,
-            ITimelineService timelineService,
-            ITwitterClient twitter,
-            IEventLogger logger)
+        public TwitterMessageService(IServiceProvider serviceProvider)
         {
-            _twitterWatchlistRepo = twitterWatchlistRepo;
-            _timelineService = timelineService;
-            _twitter = twitter;
-            _logger = logger;
+            _serviceProvider = serviceProvider;
+            _serviceScope = _serviceProvider.CreateScope();
+            _twitterWatchlistRepo = _serviceScope.ServiceProvider.GetService<ITwitterWatchlistRepository>();
+            _twitterClient = _serviceScope.ServiceProvider.GetService<ITwitterClient>();
+            _timeLineRepository = _serviceScope.ServiceProvider.GetService<ITimeLineRepository>();
+            _logger = _serviceScope.ServiceProvider.GetService<IEventLogger>();
         }
-        
-        
-        #region Implementing IScheduledTask
-
-        /// <summary>
-        /// This tasks run schedule
-        /// </summary>
-        public string Schedule => "0 3,9,15,21 * * *";
-
-
-        /// <summary>
-        /// Process the friend list for all profiles in the watchlist
-        /// </summary>
-        public async Task ExecuteAsync(CancellationToken cancellationToken)
+        #endregion
+        protected async override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            // TODO: Implement the cancellation token
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                await SaveMessagesAsync();
+                //Run this task once every 6 hours
+                await Task.Delay(6 * 60 * 60 * 1000, stoppingToken);
+            }
+        }
 
+        private async Task SaveMessagesAsync()
+        {
             try
             {
                 var start = DateTime.UtcNow;
@@ -65,7 +56,7 @@ namespace chapterone.services
                 foreach (var profile in watchlist)
                 {
                     // ... pull the latest friend list for the profile on the watchlist...
-                    var friendList = await _twitter.GetFriendIdsAsync(profile.UserId);
+                    var friendList = await _twitterClient.GetFriendIdsAsync(profile.UserId);
 
                     // Twitter bug: sometimes the API returns no friends
                     if (friendList.FriendIds.Count() > 0)
@@ -76,7 +67,7 @@ namespace chapterone.services
                         if (differences.Added.Count() > 0)
                         {
                             // ... resolve the new friends ...
-                            var addedFriends = await _twitter.GetUsersByIdsAsync(differences.Added);
+                            var addedFriends = await _twitterClient.GetUsersByIdsAsync(differences.Added);
 
                             var message = new WatchlistFriendsFollowingMessage()
                             {
@@ -85,7 +76,7 @@ namespace chapterone.services
                                 FollowedScreenNames = addedFriends.Select(x => x.ToTwitterScreenName()),
                             };
 
-                            await _timelineService.AddMessageAsync(message);
+                            await _timeLineRepository.InsertAsync(message);
                         }
 
                         // Update the friends list on the profile
@@ -94,7 +85,7 @@ namespace chapterone.services
                         await _twitterWatchlistRepo.UpdateAsync(profile);
                     }
 
-                    _logger.LogEvent("TwitterFriendlistMonitor:FriendProcessed");
+                    _logger.LogEvent("TwitterMessageService:FriendProcessed");
                 }
 
                 var end = DateTime.UtcNow;
@@ -111,11 +102,9 @@ namespace chapterone.services
             {
                 _logger.LogException(ex, new Dictionary<string, string>()
                 {
-                    { "monitor", nameof(TwitterWatchlistFriendsMonitor) }
+                    { "monitor", nameof(TwitterMessageService) }
                 });
             }
         }
-
-        #endregion
     }
 }

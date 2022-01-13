@@ -32,13 +32,26 @@ namespace chapterone.web.BackgroundServices
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                await MigrateTimelineAsync();
-                //Run this task once every 15 minutes
-                await Task.Delay(15 * 60 * 1000, stoppingToken);
+                int hours = 6, mins = 15;
+                TimeSpan serviceToRunAt = new TimeSpan(hours, mins, 0); //6:15AM
+                TimeSpan timeNow = DateTime.Now.TimeOfDay;
+                if (timeNow > serviceToRunAt)
+                {
+                    await RunProcessAsync();
+                    //Run this task once every day
+                    var now = DateTime.Now;
+                    var tomorrow = DateTime.Today.AddDays(1).AddHours(hours).AddMinutes(mins);
+                    var timeSpan = tomorrow - now;
+                    await Task.Delay(timeSpan, stoppingToken);
+                }
+                else
+                {
+                    await Task.Delay(serviceToRunAt - DateTime.Now.TimeOfDay);
+                }
             }
         }
 
-        private async Task MigrateTimelineAsync()
+        private async Task RunProcessAsync()
         {
             const int TIMELINE_SCHEMAVERSION = 6;
 

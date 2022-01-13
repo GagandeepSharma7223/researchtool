@@ -14,7 +14,8 @@ namespace chapterone.web.identity
 
         public Task<IdentityResult> DeleteAsync(IdentityRole role, CancellationToken cancellationToken) => throw new NotImplementedException();
 
-        public Task<IdentityRole> FindByIdAsync(string roleId, CancellationToken cancellationToken) => throw new NotImplementedException();
+        public Task<IdentityRole> FindByIdAsync(string roleId, CancellationToken cancellationToken) =>
+            throw new NotImplementedException();
 
         public Task<IdentityRole> FindByNameAsync(string normalizedRoleName, CancellationToken cancellationToken) => throw new NotImplementedException();
 
