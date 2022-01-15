@@ -1,18 +1,19 @@
-﻿using chapterone.data.interfaces;
+﻿using AspNetCore.Identity.MongoDbCore.Extensions;
+using AspNetCore.Identity.MongoDbCore.Infrastructure;
+using chapterone.data.interfaces;
 using chapterone.data.mongodb;
 using chapterone.data.repositories;
 using chapterone.services.clients;
 using chapterone.services.interfaces;
-using chapterone.shared;
 using chapterone.web.BackgroundServices;
 using chapterone.web.identity;
 using chapterone.web.logging;
-using chapterone.web.managers;
-using chapterone.web.middlewares;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using MongoDb.Bson.NodaTime;
 using MongoDB.Bson.Serialization;
@@ -22,105 +23,64 @@ namespace chapterone.web
 {
     public class Startup
     {
-        public IConfiguration Configuration { get; }
-
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
 
+        public IConfiguration Configuration { get; }
+
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var settings = Configuration.GetSection("AppSettings").Get<AppSettings>();
-            services.AddSingleton<IAppSettings>(settings);
-            services.AddScoped<ITwitterWatchlistRepository, TwitterWatchlistRepository>();
-            services.AddScoped<ITimeLineRepository, TimeLineRepository>();
-            services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<IRoleRepository, RoleRepository>();
-            services.AddScoped<IUserRoleRepository, UserRoleRepository>();
-            services.AddScoped<ITwitterClient, TwitterClient>();
-
-            InitialiseServices(services, settings);
-            services.AddScoped<IAccountManager, AccountManager>();
-
-            services.ConfigureApplicationCookie(options =>
+            var mongoDbSettings = Configuration.GetSection("Database").Get<DatabaseSettings>();
+            var mongoDbIdentityConfiguration = new MongoDbIdentityConfiguration
             {
-                options.Cookie.Domain = new Uri($"https://{settings.Host}").Host;
-                options.Cookie.HttpOnly = false;
-                options.Cookie.Name = Constants.AUTH_COOKIE_NAME;
-                options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
-                options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
-                options.Cookie.Path = "/";
-
-                options.LoginPath = "/login";
-                options.LogoutPath = "/logout";
-
-                options.Events.OnValidatePrincipal = async context =>
+                MongoDbSettings = new MongoDbSettings
                 {
-                    var userRepo = context.HttpContext.RequestServices.GetService<IUserRepository>();
+                    ConnectionString = mongoDbSettings.ConnectionString,
+                    DatabaseName = mongoDbSettings.Name
+                },
+                IdentityOptionsAction = options =>
+                {
+                    options.Password.RequireDigit = false;
+                    options.Password.RequiredLength = 8;
+                    options.Password.RequireNonAlphanumeric = false;
+                    options.Password.RequireUppercase = false;
+                    options.Password.RequireLowercase = false;
 
-                    var userId = context.Principal.UserId();
-                    var securityStamp = context.Principal.SecurityStamp();
+                    // Lockout settings
+                    options.Lockout.AllowedForNewUsers = false;
 
-                    var users = await userRepo.QueryAsync(x => x.Id == userId && x.SecurityStamp == securityStamp);
+                    // ApplicationUser settings
+                    options.User.RequireUniqueEmail = true;
+                    options.SignIn.RequireConfirmedEmail = true;
+                    options.SignIn.RequireConfirmedPhoneNumber = false;
+                    //options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@.-_";
+                }
+            };
+            services.ConfigureMongoDbIdentity<ApplicationUser, ApplicationRole, string>(mongoDbIdentityConfiguration)
+                    .AddDefaultTokenProviders();
 
-                    // Clear cookie and reject principal if principal was tampered
-                    if (users.Count == 0)
-                    {
-                        context.RejectPrincipal();
-                        context.HttpContext.Response.Cookies.Delete(Constants.AUTH_COOKIE_NAME);
-                    }
-                };
+            //services.AddAuthentication(o =>
+            //{
+            //    o.DefaultScheme = IdentityConstants.ApplicationScheme;
+            //    o.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+            //})
+            //.AddIdentityCookies(o => {  });
 
-                options.Validate();
-            });
 
-            services.AddAuthentication();
-            services.AddRazorPages();
-            services.AddDistributedMemoryCache();
-            services.AddSession(options =>
-            {
-                options.IdleTimeout = TimeSpan.FromSeconds(10);
-                options.Cookie.HttpOnly = true;
-                options.Cookie.IsEssential = true;
-            });
-        }
+            //services.AddIdentityCore<ApplicationUser>()
+            //    .AddRoles<ApplicationRole>()
+            //    .AddMongoDbStores<ApplicationUser, ApplicationRole, string>(mongoDbSettings.ConnectionString, mongoDbSettings.Name)
+            //    .AddSignInManager()
+            //    .AddDefaultTokenProviders();
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
-        {
-            app.UseMiddleware<EnsureHttpsMiddleware>();
-
-            if (env.IsDevelopment())
-            {
-                app.UseBrowserLink();
-                app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                app.UseExceptionHandler("/error");
-            }
-
-            app.UseStaticFiles();
-            app.UseCookiePolicy();
-            app.UseRouting();
-            app.UseAuthentication();
-            app.UseAuthorization();
-            app.UseSession();
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllerRoute("areaRoute", "{area:exists}/{controller=Admin}/{action=Index}/{id?}");
-                endpoints.MapControllerRoute("areaRoute", "{area:exists}/{controller=Tenants}/{action=Index}/{id?}");
-                endpoints.MapControllerRoute("areaRoute", "{area:exists}/{controller=Landlords}/{action=Index}/{id?}");
-            });
-        }
-
-        /// <summary>
-        /// Initialise all the core services
-        /// </summary>
-        private void InitialiseServices(IServiceCollection services, IAppSettings settings)
-        {
+            services.AddIdentity<ApplicationUser, ApplicationRole>()
+                .AddMongoDbStores<ApplicationUser, ApplicationRole, string>
+                (
+                    mongoDbSettings.ConnectionString, mongoDbSettings.Name
+                ).AddDefaultTokenProviders();
             // App Insight settings
             var appInsightsKey = Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"] ?? string.Empty;
             var logger = new AppInsightsEventLogger(appInsightsKey);
@@ -135,16 +95,62 @@ namespace chapterone.web
             services.AddSingleton<ITwitterSettings>(serviceProvider =>
                 serviceProvider.GetRequiredService<IOptions<TwitterSettings>>().Value);
             BsonSerializer.RegisterSerializer(new ZonedDateTimeSerializer());
+            var settings = Configuration.GetSection("AppSettings").Get<AppSettings>();
+            
+            // Service injection
+            services.AddSingleton<IAppSettings>(settings);
+            services.AddScoped<ITwitterWatchlistRepository, TwitterWatchlistRepository>();
+            services.AddScoped<ITimeLineRepository, TimeLineRepository>();
+            services.AddScoped<ITwitterClient, TwitterClient>();
 
-            //var emailService = new SendGridEmailService(settings.SendGridApiKey);
-                      
+            services.ConfigureApplicationCookie(options =>
+            {
+                // Cookie settings
+                options.Cookie.HttpOnly = true;
+                options.ExpireTimeSpan = TimeSpan.FromHours(2);
+                options.LoginPath = "/login";
+                options.AccessDeniedPath = "/error";
+                options.SlidingExpiration = true;
+            });
+            services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromSeconds(10);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
             // Background services
-            services.AddHostedService<MigrateProfileService>();
-            services.AddHostedService<MigrateTimelineService>();
-            services.AddHostedService<TwitterMessageService>();
-            services.AddHostedService<TwitterWatchlistService>();
-            services.AddUserIdentity();
+            //services.AddHostedService<MigrateProfileService>();
+            //services.AddHostedService<MigrateTimelineService>();
+            //services.AddHostedService<TwitterMessageService>();
+            //services.AddHostedService<TwitterWatchlistService>();
+            services.AddControllersWithViews();
         }
 
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                app.UseExceptionHandler("/Home/Error");
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                app.UseHsts();
+            }
+            app.UseHttpsRedirection();
+            app.UseStaticFiles();
+            app.UseRouting();
+            app.UseAuthentication();
+            app.UseAuthorization();
+            app.UseSession();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
+            });
+        }
     }
 }

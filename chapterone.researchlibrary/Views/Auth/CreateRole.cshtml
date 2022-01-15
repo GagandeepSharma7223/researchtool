@@ -1,0 +1,22 @@
+﻿@{
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<div class="small-container col-4 offset-4">
+	<h3 class="text-center">Create Role</h3>
+	<br />
+
+	@if (ViewBag.Message != null)
+	{
+		<div class="alert alert-success">@ViewBag.Message</div>
+	}
+
+	<form method="post">
+		<div class="form-group">
+			<label for="name">Name:</label>
+			<input name="name" class="form-control" required />
+		</div>
+		<button type="submit" class="btn btn-primary">Create</button>
+	</form>
+</div>

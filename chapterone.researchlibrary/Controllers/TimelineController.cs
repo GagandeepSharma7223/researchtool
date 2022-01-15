@@ -18,8 +18,6 @@ namespace chapterone.web.controllers
     public class TimelineController : Controller
     {
         private const int TIMELINE_QUERY_PAGESIZE = 20;
-
-        //private readonly IDatabaseRepository<Message> _timelineRepo;
         private readonly IEventLogger _logger;
         private readonly IConfiguration _configuration;
         private readonly ITimeLineRepository _timeLineRepository;

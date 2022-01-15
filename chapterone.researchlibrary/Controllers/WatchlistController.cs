@@ -31,7 +31,7 @@ namespace chapterone.web.controllers
         [HttpGet("watchlist")]
         public async Task<IActionResult> GetWatchlist()
         {
-            var profiles = await _twitterWatchlist.QueryAsync(x => true, pageNumber: 1, pageSize: 20);
+            var profiles = await _twitterWatchlist.QueryAsync(x => true);
 
             var vm = new WatchlistViewModel()
             {

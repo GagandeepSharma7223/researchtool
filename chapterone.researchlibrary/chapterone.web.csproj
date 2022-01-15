@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AspNetCore.Identity.MongoDbCore" Version="3.1.2" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.20.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="6.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="6.0.1" />
@@ -17,6 +18,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.BrowserLink" Version="2.2.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.1" />
+    <PackageReference Include="MongoDbGenericRepository" Version="1.4.8" />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,6 +27,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\chapterone.services\chapterone.services\chapterone.services.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="managers\" />
   </ItemGroup>
 
 </Project>

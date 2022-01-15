@@ -1,0 +1,84 @@
+﻿@using chapterone.web.identity
+@model IEnumerable<ApplicationRole>
+@{
+	ViewData["Title"] = "Roles";
+	Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<div class="content-wrapper">
+	<section class="content-header">
+		<div class="container-fluid">
+			<div class="row mb-2">
+				<div class="col-sm-6">
+					<h1>@ViewData["Title"]</h1>
+				</div>
+			</div>
+		</div>
+	</section>
+	<section class="content">
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="card card-primary">
+						<div class="card-body">
+							@if (!Model.Any())
+							{
+								<div class="row">
+									<div class="col-sm-12 d-flex justify-content-center">
+										<h5>No Roles Found</h5>
+									</div>
+								</div>
+								<div class="row d-flex justify-content-center">
+									<div class="">
+										<a asp-controller="Auth" class="btn btn-block btn-outline-primary"
+									   asp-action="CreateRole">Create</a>
+									</div>
+								</div>
+							}
+							else
+							{
+								<div class="d-flex flex-row-reverse form-group">
+									<a asp-controller="Auth" class="btn btn-primary"
+								   asp-action="CreateRole">Create</a>
+								</div>
+								<div class="row" id="roleTableDiv">
+									<div class="col-sm-12">
+										<table id="roleTable" class="table table-bordered table-striped">
+											<thead>
+												<tr>
+													<th>Name</th>
+													<th>Version</th>
+												</tr>
+											</thead>
+											<tbody>
+												@foreach (var role in Model)
+												{
+													<tr>
+														<td>@role.Name</td>
+														<td>@role.Version</td>
+													</tr>
+												}
+											</tbody>
+										</table>
+									</div>
+								</div>
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+</div>
+
+@section Scripts{
+<script>
+		$(document).ready(function () {
+			DataTableConfiguration();
+		});
+	 function DataTableConfiguration() {
+		  $('#roleTable').DataTable();
+	}
+</script>
+}

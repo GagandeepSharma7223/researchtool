@@ -1,10 +1,8 @@
 ﻿using chapterone.services.interfaces;
-using chapterone.web.managers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace chapterone.web.controllers
@@ -14,14 +12,12 @@ namespace chapterone.web.controllers
     /// </summary>
     public class SetupController : Controller
     {
-        private readonly IAccountManager _accountManager;
         private readonly IEventLogger _logger;
         /// <summary>
         /// Constructor
         /// </summary>
-        public SetupController(IAccountManager accountManager, IEventLogger logger)
+        public SetupController(IEventLogger logger)
         {
-            _accountManager = accountManager;
             _logger = logger;
         }
 
@@ -32,8 +28,8 @@ namespace chapterone.web.controllers
         {
             try
             {
-                if (!_accountManager.IsSetupRequired)
-                    return NotFound();
+                //if (!_accountManager.IsSetupRequired)
+                //    return NotFound();
 
                 return View("~/views/Setup.cshtml");
             }
@@ -45,33 +41,33 @@ namespace chapterone.web.controllers
         }
 
 
-        [HttpPost("setup")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Setup([FromForm] string username, [FromForm] string password)
-        {
-            try
-            {
-                if (!_accountManager.IsSetupRequired)
-                    return NotFound();
+        //[HttpPost("setup")]
+        //[AllowAnonymous]
+        //public async Task<IActionResult> Setup([FromForm] string username, [FromForm] string password)
+        //{
+        //    try
+        //    {
+        //        if (!_accountManager.IsSetupRequired)
+        //            return NotFound();
 
-                var result = await _accountManager.CreateUserAsync(username, password);
-                if (!result.Succeeded)
-                {
-                    // Post-back for handling errors
-                    var fieldErrors = new List<string>();
+        //        var result = await _accountManager.CreateUserAsync(username, password);
+        //        if (!result.Succeeded)
+        //        {
+        //            // Post-back for handling errors
+        //            var fieldErrors = new List<string>();
 
-                    TempData["error_fields"] = fieldErrors;
-                    TempData["error_message"] = "Invalid username or password";
-                    TempData["postback_username"] = username;
+        //            TempData["error_fields"] = fieldErrors;
+        //            TempData["error_message"] = "Invalid username or password";
+        //            TempData["postback_username"] = username;
 
-                    return Redirect("/setup");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogException(ex);
-            }
-            return Redirect("/");
-        }
+        //            return Redirect("/setup");
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogException(ex);
+        //    }
+        //    return Redirect("/");
+        //}
     }
 }

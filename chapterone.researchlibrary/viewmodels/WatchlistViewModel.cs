@@ -6,6 +6,8 @@ namespace chapterone.web.viewmodels
     public class WatchlistViewModel
     {
         public IEnumerable<ProfileViewModel> Profiles { get; set; } = new List<ProfileViewModel>();
+        public int CurrentPage { get; set; }
+        public int MaxPages { get; set; }
     }
 
     public class ProfileViewModel
