@@ -5,7 +5,6 @@
 	Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-
 <div class="content-wrapper">
 	<section class="content-header">
 		<div class="container-fluid">
@@ -49,6 +48,7 @@
 												<tr>
 													<th>Name</th>
 													<th>Email</th>
+													<td>Roles</td>
 													<th>Confirmed</th>
 													<th>Version</th>
 												</tr>
@@ -57,8 +57,9 @@
 												@foreach (var user in Model)
 												{
 													<tr>
-														<td>@user.UserName</td>
+														<td>@user.Name</td>
 														<td>@user.Email</td>
+														<td>@string.Join(", ", user)</td>
 														<td>@(user.EmailConfirmed ? "Yes": "No")</td>
 														<td>@user.Version</td>
 													</tr>
@@ -79,10 +80,7 @@
 @section Scripts{
 <script>
 		$(document).ready(function () {
-			DataTableConfiguration();
+			$('#userTable').DataTable();
 		});
-	 function DataTableConfiguration() {
-		  $('#userTable').DataTable();
-	}
 </script>
 }

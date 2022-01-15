@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace chapterone.web.controllers
 {
-
+    [Authorize]
     public class AuthController : Controller
     {
         private const string HOMEPAGE = "/";
@@ -48,36 +48,42 @@ namespace chapterone.web.controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([Required][FromForm] string username, [Required][FromForm] string password, [FromQuery] string redirect = HOMEPAGE)
         {
-            if (ModelState.IsValid)
+            try
             {
-                ApplicationUser appUser = await _userManager.FindByEmailAsync(username);
-                if (appUser != null)
+                if (ModelState.IsValid)
                 {
-                    await _signInManager.SignOutAsync();
-                    var result = await _signInManager.PasswordSignInAsync(appUser, password, false, false);
-
-                    if (result.Succeeded)
+                    ApplicationUser appUser = await _userManager.FindByEmailAsync(username);
+                    if (appUser != null)
                     {
-                        var url = string.IsNullOrWhiteSpace(redirect) ? HOMEPAGE : Uri.UnescapeDataString(redirect);
-                        return LocalRedirect(url);
-                    }
-                }
-                // Post-back for handling errors
-                var fieldErrors = new List<string>();
-                TempData["error_fields"] = fieldErrors;
-                TempData["error_message"] = "Invalid username or password";
-                TempData["postback_username"] = username;
-                return Redirect("/login");
-            }
-            return View();
-        }
+                        await _signInManager.SignOutAsync();
+                        var result = await _signInManager.PasswordSignInAsync(appUser, password, false, false);
 
+                        if (result.Succeeded)
+                        {
+                            var url = string.IsNullOrWhiteSpace(redirect) ? HOMEPAGE : Uri.UnescapeDataString(redirect);
+                            return LocalRedirect(url);
+                        }
+                    }
+                    // Post-back for handling errors
+                    var fieldErrors = new List<string>();
+                    TempData["error_fields"] = fieldErrors;
+                    TempData["error_message"] = "Invalid username or password";
+                    TempData["postback_username"] = username;
+                    return Redirect("/login");
+                }
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return NotFound();
+            }
+        }
 
         [HttpGet("logout")]
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
-
             return new RedirectResult("/login");
         }
 
@@ -91,7 +97,6 @@ namespace chapterone.web.controllers
         {
             return View("~/views/ForgotPassword.cshtml");
         }
-
 
         [AllowAnonymous]
         [HttpPost("/forgotpassword")]
@@ -162,45 +167,58 @@ namespace chapterone.web.controllers
 
         #region Users
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public IActionResult Users()
         {
             var users = _userManager.Users.AsEnumerable();
             return View(users);
         }
 
+        [Authorize(Roles = "Admin")]
         public ViewResult CreateUser() => View();
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateUser(UserModel user)
         {
-            if (ModelState.IsValid)
+            try
             {
-                ApplicationUser appUser = new ApplicationUser
+                if (ModelState.IsValid)
                 {
-                    UserName = user.Email,
-                    Email = user.Email,
-                    Name = user.Name
-                };
+                    ApplicationUser appUser = new ApplicationUser
+                    {
+                        UserName = user.Email,
+                        Email = user.Email,
+                        Name = user.Name,
+                        Version = SchemaVersion
+                    };
 
-                IdentityResult result = await _userManager.CreateAsync(appUser, user.Password);
-                if (result.Succeeded)
-                    ViewBag.Message = "User Created Successfully";
-                else
-                {
-                    foreach (IdentityError error in result.Errors)
-                        ModelState.AddModelError("", error.Description);
+                    IdentityResult result = await _userManager.CreateAsync(appUser, user.Password);
+                    if (result.Succeeded)
+                        ViewBag.Message = "User Created Successfully";
+                    else
+                    {
+                        foreach (IdentityError error in result.Errors)
+                            ModelState.AddModelError("", error.Description);
+                    }
+                    //Adding User to Admin Role
+                    var role = _roleManager.Roles.Where(x => x.Id == user.RoleId).FirstOrDefault();
+                    await _userManager.AddToRoleAsync(appUser, role.Name);
                 }
-                //Adding User to Admin Role
-                var role = _roleManager.Roles.Where(x => x.Id == user.RoleId).FirstOrDefault();
-                await _userManager.AddToRoleAsync(appUser, role.Name);
+                return RedirectToAction("Users");   
             }
-            return View(user);
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return NotFound();
+            }
         } 
         #endregion
 
         #region Roles
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public IActionResult Roles()
         {
             var roles = _roleManager.Roles.AsEnumerable();
@@ -208,27 +226,37 @@ namespace chapterone.web.controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public IActionResult CreateRole() => View();
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateRole([Required] string name)
         {
-            if (ModelState.IsValid)
+            try
             {
-                IdentityResult result = await _roleManager.CreateAsync(new ApplicationRole()
+                if (ModelState.IsValid)
                 {
-                    Name = name,
-                    Version = SchemaVersion
-                });
-                if (result.Succeeded)
-                    ViewBag.Message = "Role Created Successfully";
-                else
-                {
-                    foreach (IdentityError error in result.Errors)
-                        ModelState.AddModelError("", error.Description);
+                    IdentityResult result = await _roleManager.CreateAsync(new ApplicationRole()
+                    {
+                        Name = name,
+                        Version = SchemaVersion
+                    });
+                    if (result.Succeeded)
+                        ViewBag.Message = "Role Created Successfully";
+                    else
+                    {
+                        foreach (IdentityError error in result.Errors)
+                            ModelState.AddModelError("", error.Description);
+                    }
                 }
+                return RedirectToAction("Roles");
             }
-            return RedirectToAction("Roles");
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return NotFound();
+            }
         }
         #endregion
     }

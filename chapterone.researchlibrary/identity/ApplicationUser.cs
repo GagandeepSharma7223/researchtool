@@ -17,7 +17,6 @@ namespace chapterone.web.identity
         }
         public string Name { get; set; }
         public ZonedDateTime Created { get; set; } = LocalDateTime.FromDateTime(DateTime.UtcNow).InUtc();
-        public int SchemaVersion { get; set; }
     }
 
     [CollectionName("Role")]

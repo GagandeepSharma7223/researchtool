@@ -29,12 +29,15 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/watchlist">Watchlist</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/settings">Settings</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/diagnostics">Diagnostics</a>
-                    </li>
+                    @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="/auth/users">Users</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/auth/roles">Roles</a>
+                        </li>
+                    }
                     <li class="nav-item">
                         <a class="nav-link" href="/logout">Logout</a>
                     </li>
