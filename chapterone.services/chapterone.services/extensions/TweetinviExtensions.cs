@@ -1,8 +1,4 @@
-﻿using chapterone.services.clients;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Tweetinvi.Models;
+﻿using Tweetinvi.Models;
 
 namespace chapterone.services.extensions
 {

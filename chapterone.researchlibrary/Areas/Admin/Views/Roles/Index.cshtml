@@ -1,9 +1,10 @@
 ﻿@using chapterone.web.identity
-@model IEnumerable<ApplicationUser>
+@model IEnumerable<ApplicationRole>
 @{
-	ViewData["Title"] = "Users";
+	ViewData["Title"] = "Roles";
 	Layout = "~/Views/Shared/_Layout.cshtml";
 }
+
 
 <div class="content-wrapper">
 	<section class="content-header">
@@ -25,43 +26,35 @@
 							{
 								<div class="row">
 									<div class="col-sm-12 d-flex justify-content-center">
-										<h5>No Users Found</h5>
+										<h5>No Roles Found</h5>
 									</div>
 								</div>
 								<div class="row d-flex justify-content-center">
 									<div class="">
-										<a asp-controller="Auth" class="btn btn-block btn-outline-primary"
-									   asp-action="CreateUser">Create</a>
+										<a class="btn btn-primary" asp-action="Create">Create</a>
 									</div>
 								</div>
 							}
 							else
 							{
 								<div class="d-flex flex-row-reverse form-group">
-									<a asp-controller="Auth" class="btn btn-primary"
-								   asp-action="CreateUser">Create</a>
+									<a class="btn btn-primary" asp-action="Create">Create</a>
 								</div>
-								<div class="row" id="userTableDiv">
+								<div class="row" id="roleTableDiv">
 									<div class="col-sm-12">
-										<table id="userTable" class="table table-bordered table-striped">
+										<table id="roleTable" class="table table-bordered table-striped">
 											<thead>
 												<tr>
 													<th>Name</th>
-													<th>Email</th>
-													<td>Roles</td>
-													<th>Confirmed</th>
 													<th>Version</th>
 												</tr>
 											</thead>
 											<tbody>
-												@foreach (var user in Model)
+												@foreach (var role in Model)
 												{
 													<tr>
-														<td>@user.Name</td>
-														<td>@user.Email</td>
-														<td>@string.Join(", ", user)</td>
-														<td>@(user.EmailConfirmed ? "Yes": "No")</td>
-														<td>@user.Version</td>
+														<td>@role.Name</td>
+														<td>@role.Version</td>
 													</tr>
 												}
 											</tbody>
@@ -80,7 +73,7 @@
 @section Scripts{
 <script>
 		$(document).ready(function () {
-			$('#userTable').DataTable();
+			$('#roleTable').DataTable();
 		});
 </script>
 }

@@ -1,0 +1,42 @@
+﻿@model ApplicationUser
+
+@{
+    ViewData["Title"] = "Delete";
+    Layout = null;
+}
+
+
+<div class="row">
+    <div class="col-sm-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Delete</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="callout callout-danger">
+                            <h5>Are you sure.?</h5>
+                            @if (Model.EmailConfirmed)
+                            {
+                                <p id="messege">
+                                    <strong>@Model.Name</strong> has already confirmed their account. Therefore, deleting will only remove the association between your account and theirs, not delete their account.
+                                </p>
+                            }
+                            else
+                            {
+                                <p id="messege">
+                                    Please Click on Delete to delete <strong>@Model.Name</strong> from system.
+                                </p>
+                            }
+
+                        </div>
+                        <form id="deleteUserForm">
+                            @Html.HiddenFor(x => x.Id)
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

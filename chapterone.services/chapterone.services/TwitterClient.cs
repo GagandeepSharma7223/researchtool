@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Tweetinvi.Models;
 
-namespace chapterone.services.clients
+namespace chapterone.services
 {
     /// <summary>
     /// Client that communicates with Twitter

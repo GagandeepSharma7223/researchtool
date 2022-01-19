@@ -1,18 +1,22 @@
 ﻿using chapterone.services.interfaces;
+using chapterone.shared;
 using chapterone.shared.models;
+using chapterone.web.Helper;
 using chapterone.web.identity;
-using Microsoft.AspNetCore.Authorization;
+using chapterone.web.viewmodels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Text;
+using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 
 namespace chapterone.web.controllers
 {
-    [Authorize]
     public class AuthController : Controller
     {
         private const string HOMEPAGE = "/";
@@ -21,30 +25,32 @@ namespace chapterone.web.controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
+        private readonly IViewRenderService _viewRenderService;
+        private readonly ICustomEmailService _customEmailService;
         private const int SchemaVersion = 6;
         /// <summary>
         /// Constructor
         /// </summary>
         public AuthController(IAppSettings settings, IEventLogger logger, UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager, RoleManager<ApplicationRole> roleManager)
+            SignInManager<ApplicationUser> signInManager, RoleManager<ApplicationRole> roleManager, ICustomEmailService customEmailService, IViewRenderService viewRenderService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _settings = settings;
             _logger = logger;
             _roleManager = roleManager;
+            _customEmailService = customEmailService;
+            _viewRenderService = viewRenderService;
         }
 
         #region Login / Logout
 
-        [AllowAnonymous]
         [HttpGet("login")]
         public IActionResult ViewLogin()
         {
             return View("~/views/Login.cshtml");
         }
 
-        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([Required][FromForm] string username, [Required][FromForm] string password, [FromQuery] string redirect = HOMEPAGE)
         {
@@ -91,173 +97,198 @@ namespace chapterone.web.controllers
 
         #region Forgot password
 
-        [AllowAnonymous]
         [HttpGet("/forgotpassword")]
         public IActionResult ViewForgotPassword()
         {
             return View("~/views/ForgotPassword.cshtml");
         }
 
-        [AllowAnonymous]
         [HttpPost("/forgotpassword")]
-        public async Task<IActionResult> ForgotPasswordRequest(string email)
+        public async Task<IActionResult> ForgotPasswordRequest([Required] string email)
         {
-            //var token = await  _accountManager.GetPasswordResetToken(email);
+            if (!ModelState.IsValid)
+                return View("~/views/ForgotPassword.cshtml");
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+                return LocalRedirect(ErrorPage.Path);
 
-            //if (string.IsNullOrWhiteSpace(token))
-            //{
-            //    TempData["error_fields"] = new string[] { "email" };
-            //    TempData["error_message"] = "Invalid email address";
+            string code = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-            //    return Redirect("/forgotpassword");
-            //}
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                TempData["error_fields"] = new string[] { "email" };
+                TempData["error_message"] = "Invalid email address";
 
-            //var emailEncoded = UrlEncoder.Default.Encode(email);
-            //var tokenEncoded = UrlEncoder.Default.Encode(token);
-            //var confirmationLink = $"https://{_settings.Host}/resetpassword?email={emailEncoded}&token={tokenEncoded}";
-
-            //var emailHtml = "Hello!<br/><br/>" +
-            //    "Reset your password by clicking on this link:<br/><br/>" +
-            //   $"<a style=\"background-color: #00babe; border-radius: 5px; text-align: center; padding: 0.5em 2em; text-decoration: none; color: white;\" href=\"{confirmationLink}\">Reset password</a><br/><br/>" +
-            //    "";
-
-            // TBD sendgrid is not setup to send email
-            //if (!await _emailService.SendEmail(email, "🔐 Reset your password", emailHtml))
-            //    return BadRequest();
-
-            return Ok("Check your email");
+                return Redirect("/forgotpassword");
+            }
+            //Create User Notification Settings
+            var emailEncoded = UrlEncoder.Default.Encode(email);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            var confirmationLink = $"https://{_settings.Host}/resetpassword?email={emailEncoded}&token={code}";
+            string view = "~/Views/EmailTemplates/SendForgotPasswordEmail.cshtml";
+            EmailViewModel emailViewModel = new EmailViewModel
+            {
+                Name = user.Name,
+                Url = confirmationLink
+            };
+            var html = await _viewRenderService.RenderToStringAsync(view, emailViewModel);
+            await _customEmailService.SendEmailAsync(user.Email, "🔐 Reset your password", html);
+            return Ok("Please Check your email");
         }
 
         #endregion
 
         #region Reset password
 
-        [AllowAnonymous]
         [HttpGet("/resetpassword")]
         public IActionResult ViewResetPassword([FromQuery] string email, [FromQuery] string token)
         {
-            TempData["postback_username"] = email;
-            TempData["postback_token"] = token;
-
-            return View("~/views/ResetPassword.cshtml");
+            if (token == null)
+            {
+                return BadRequest("A code must be supplied for password reset.");
+            }
+            var viewModel = new SetPasswordViewModel
+            {
+                Code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(token)),
+                Email = email
+            };
+            return View("~/views/ResetPassword.cshtml", viewModel);
         }
 
 
-        [AllowAnonymous]
         [HttpPost("/resetpassword")]
-        public async Task<IActionResult> ResetPasswordRequest(string email, string token, string password)
+        public async Task<IActionResult> ResetPasswordRequest(SetPasswordViewModel model)
         {
-            //var result = await _accountManager.ResetPassword(email, token, password);
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
 
-            //if (!result.Succeeded)
-            //{
-            //    // Post-back for handling errors
-            //    var fieldErrors = new List<string>() { "password" };
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                // Don't reveal that the user does not exist
+                ViewBag.Success = true;
+                return View(model);
+            }
 
-            //    TempData["error_fields"] = fieldErrors;
-            //    TempData["error_message"] = result.Errors.First().Description;
-
-            //    return Redirect("/resetpassword");
-            //}
-
-            return Redirect("/login");
+            var result = await _userManager.ResetPasswordAsync(user, model.Code, model.Password);
+            if (result.Succeeded)
+                return Redirect("/login");
+            // Post-back for handling errors
+            var fieldErrors = new List<string>() { "password" };
+            TempData["error_fields"] = fieldErrors;
+            TempData["error_message"] = result.Errors.First().Description;
+            return Redirect("/resetpassword");
         }
 
         #endregion
 
-        #region Users
-        [HttpGet]
-        [Authorize(Roles = "Admin")]
-        public IActionResult Users()
-        {
-            var users = _userManager.Users.AsEnumerable();
-            return View(users);
-        }
-
-        [Authorize(Roles = "Admin")]
-        public ViewResult CreateUser() => View();
-
-        [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> CreateUser(UserModel user)
+        #region ConfirmEmail
+        [HttpGet("ConfirmEmail")]
+        public async Task<IActionResult> ConfirmEmail(string token, string email)
         {
             try
             {
-                if (ModelState.IsValid)
+                var user = await _userManager.FindByEmailAsync(email);
+                if (user == null)
+                    return LocalRedirect(ErrorPage.Path);
+                var result = await _userManager.ConfirmEmailAsync(user, token);
+                if (result.Succeeded)
                 {
-                    ApplicationUser appUser = new ApplicationUser
+                    string resetPasswordCode = await _userManager.GeneratePasswordResetTokenAsync(user);
+                    resetPasswordCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(resetPasswordCode));
+                    return RedirectToAction("SetPassword", new { code = resetPasswordCode, id = user.Id });
+                }
+                return LocalRedirect(ErrorPage.Path);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogException(ex);
+                return LocalRedirect(ErrorPage.Path);
+            }
+        }
+        #endregion
+
+        #region SetPassword
+        [HttpGet("SetPassword")]
+        public async Task<IActionResult> SetPassword(string code, string id)
+        {
+            try
+            {
+                if (code == null)
+                {
+                    return BadRequest("A code must be supplied for password reset.");
+                }
+                else
+                {
+                    var user = await _userManager.FindByIdAsync(id);
+                    var model = new SetPasswordViewModel
                     {
-                        UserName = user.Email,
-                        Email = user.Email,
-                        Name = user.Name,
-                        Version = SchemaVersion
+                        Code = code,
+                        Email = user.Email
                     };
-
-                    IdentityResult result = await _userManager.CreateAsync(appUser, user.Password);
-                    if (result.Succeeded)
-                        ViewBag.Message = "User Created Successfully";
-                    else
-                    {
-                        foreach (IdentityError error in result.Errors)
-                            ModelState.AddModelError("", error.Description);
-                    }
-                    //Adding User to Admin Role
-                    var role = _roleManager.Roles.Where(x => x.Id == user.RoleId).FirstOrDefault();
-                    await _userManager.AddToRoleAsync(appUser, role.Name);
+                    return View(model);
                 }
-                return RedirectToAction("Users");   
             }
             catch (Exception ex)
             {
                 _logger.LogException(ex);
-                return NotFound();
+                return LocalRedirect(ErrorPage.Path);
             }
-        } 
-        #endregion
-
-        #region Roles
-
-        [HttpGet]
-        [Authorize(Roles = "Admin")]
-        public IActionResult Roles()
-        {
-            var roles = _roleManager.Roles.AsEnumerable();
-            return View(roles);
         }
 
-        [HttpGet]
-        [Authorize(Roles = "Admin")]
-        public IActionResult CreateRole() => View();
-
-        [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> CreateRole([Required] string name)
+        [HttpPost("SetPassword")]
+        public async Task<IActionResult> SetPassword(SetPasswordViewModel model)
         {
             try
             {
-                if (ModelState.IsValid)
+                if (!ModelState.IsValid)
                 {
-                    IdentityResult result = await _roleManager.CreateAsync(new ApplicationRole()
-                    {
-                        Name = name,
-                        Version = SchemaVersion
-                    });
-                    if (result.Succeeded)
-                        ViewBag.Message = "Role Created Successfully";
-                    else
-                    {
-                        foreach (IdentityError error in result.Errors)
-                            ModelState.AddModelError("", error.Description);
-                    }
+                    return View(model);
                 }
-                return RedirectToAction("Roles");
+
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user == null)
+                {
+                    // Don't reveal that the user does not exist
+                    ViewBag.Success = true;
+                    return View(model);
+                }
+
+                var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Code));
+                var result = await _userManager.ResetPasswordAsync(user, code, model.Password);
+                if (result.Succeeded)
+                {
+                    ViewBag.Success = true;
+                    // Send new password create email
+                    string view = "~/Views/EmailTemplates/PasswordChangeEmail.cshtml";
+                    PasswordChangeEmailVM emailViewModel = new PasswordChangeEmailVM
+                    {
+                        Name = user.Name,
+                        Email = user.Email,
+                        PasswordChangeTime = DateTime.UtcNow.ToString("dddd, dd MMMM yyyy HH:mm:ss"),
+                        IsForNewPasword = true,
+                        PasswordResetUrl = $"https://{_settings.Host}/forgotpassword"
+                    };
+                    var html = await _viewRenderService.RenderToStringAsync(view, emailViewModel);
+                    await _customEmailService.SendEmailAsync(user.Email, "New password created for your account", html);
+                    return LocalRedirect("~/login");
+                }
+
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+                return View(model);
             }
             catch (Exception ex)
             {
                 _logger.LogException(ex);
-                return NotFound();
+                return LocalRedirect(ErrorPage.Path);
             }
         }
         #endregion
+
     }
 }

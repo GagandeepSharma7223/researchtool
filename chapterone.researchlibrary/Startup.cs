@@ -3,9 +3,10 @@ using AspNetCore.Identity.MongoDbCore.Infrastructure;
 using chapterone.data.interfaces;
 using chapterone.data.mongodb;
 using chapterone.data.repositories;
-using chapterone.services.clients;
+using chapterone.services;
 using chapterone.services.interfaces;
 using chapterone.web.BackgroundServices;
+using chapterone.web.Helper;
 using chapterone.web.identity;
 using chapterone.web.logging;
 using Microsoft.AspNetCore.Builder;
@@ -62,25 +63,13 @@ namespace chapterone.web
             services.ConfigureMongoDbIdentity<ApplicationUser, ApplicationRole, string>(mongoDbIdentityConfiguration)
                     .AddDefaultTokenProviders();
 
-            //services.AddAuthentication(o =>
-            //{
-            //    o.DefaultScheme = IdentityConstants.ApplicationScheme;
-            //    o.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-            //})
-            //.AddIdentityCookies(o => {  });
-
-
-            //services.AddIdentityCore<ApplicationUser>()
-            //    .AddRoles<ApplicationRole>()
-            //    .AddMongoDbStores<ApplicationUser, ApplicationRole, string>(mongoDbSettings.ConnectionString, mongoDbSettings.Name)
-            //    .AddSignInManager()
-            //    .AddDefaultTokenProviders();
-
             services.AddIdentity<ApplicationUser, ApplicationRole>()
                 .AddMongoDbStores<ApplicationUser, ApplicationRole, string>
                 (
                     mongoDbSettings.ConnectionString, mongoDbSettings.Name
                 ).AddDefaultTokenProviders();
+            services.AddRazorPages();
+
             // App Insight settings
             var appInsightsKey = Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"] ?? string.Empty;
             var logger = new AppInsightsEventLogger(appInsightsKey);
@@ -102,7 +91,8 @@ namespace chapterone.web
             services.AddScoped<ITwitterWatchlistRepository, TwitterWatchlistRepository>();
             services.AddScoped<ITimeLineRepository, TimeLineRepository>();
             services.AddScoped<ITwitterClient, TwitterClient>();
-
+            services.AddScoped<ICustomEmailService, CustomEmailService>();
+            services.AddScoped<IViewRenderService, ViewRenderService>();
             services.ConfigureApplicationCookie(options =>
             {
                 // Cookie settings
@@ -119,10 +109,10 @@ namespace chapterone.web
                 options.Cookie.IsEssential = true;
             });
             // Background services
-            //services.AddHostedService<MigrateProfileService>();
-            //services.AddHostedService<MigrateTimelineService>();
-            //services.AddHostedService<TwitterMessageService>();
-            //services.AddHostedService<TwitterWatchlistService>();
+            services.AddHostedService<MigrateProfileService>();
+            services.AddHostedService<MigrateTimelineService>();
+            services.AddHostedService<TwitterMessageService>();
+            services.AddHostedService<TwitterWatchlistService>();
             services.AddControllersWithViews();
         }
 
@@ -135,7 +125,7 @@ namespace chapterone.web
             }
             else
             {
-                app.UseExceptionHandler("/Home/Error");
+                app.UseExceptionHandler("/Error");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
@@ -147,9 +137,12 @@ namespace chapterone.web
             app.UseSession();
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapControllerRoute("areaRoute", "{area:exists}/{controller=Admin}/{action=Index}/{id?}");
+
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
+                endpoints.MapRazorPages();
             });
         }
     }

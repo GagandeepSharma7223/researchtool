@@ -1,4 +1,6 @@
-﻿@{
+﻿@model RoleViewModel
+
+@{
 	Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -14,8 +16,9 @@
 
 	<form method="post">
 		<div class="form-group">
-			<label for="name">Name:</label>
-			<input name="name" class="form-control" required />
+			<label asp-for="@Model.Name" class="control-label"></label>
+			<input asp-for="@Model.Name" class="form-control" tabindex="1" />
+			<span asp-validation-for="@Model.Name" class="text-danger"></span>
 		</div>
 		<button type="submit" class="btn btn-primary">Create</button>
 	</form>

@@ -70,7 +70,7 @@ namespace chapterone.web.BackgroundServices
                 if (friendList.FriendIds.Count() > 0)
                 {
                     // ... pull the watchlist ...
-                    var watchlist = await _twitterWatchlistRepo.QueryAsync(x => true);
+                        var watchlist = await _twitterWatchlistRepo.QueryAsync(x => true);
 
                     // ... analyse differences between the lists ...
                     var differences = DifferenceAnalyser<long>.ProcessChanges(friendList.FriendIds, watchlist.Select(x => x.UserId));
