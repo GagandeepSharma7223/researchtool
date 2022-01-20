@@ -131,6 +131,7 @@ namespace chapterone.services
         /// </summary>
         private Task<ICredentialsRateLimits> GetRateLimitAsync()
         {
+            _userClient.RateLimits.ClearRateLimitCacheAsync();
             return _userClient.RateLimits.GetRateLimitsAsync();
         }
 
